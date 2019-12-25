@@ -66,5 +66,6 @@ public class Demo {
     public static void main(String[] args) {
         PriceService service = new PriceServiceImpl();
         Stream.of(Movie.Type.values()).forEach(p ->  System.out.println(p.getPriceAlgo().apply(service, 5)));
+        // change to git
     }
 }
