@@ -5,7 +5,10 @@ import java.util.function.Predicate;
 public class Apple {
     private String name;
     private Double weight;
-
+    
+    public Apple() {
+    }
+    
     public Apple(String name, Double weight) {
         super();
         this.name = name;

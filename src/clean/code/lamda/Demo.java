@@ -4,15 +4,49 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import clean.code.funInf.CampaignProcessor;
 
 public class Demo {
     
-    public static void main(String[] args) {
+    private static Apple app;
+    
+    public static void main(String[] args) throws Exception {
         List<Apple> apples = createApples();
         Predicate<Apple> appPre = p -> p.getName().equals("ip10");
+        
+        List<Apple> ip11 = filterApple(apples, Apple::isIp11);
+        
         List<Apple> ip10 = filterApple(apples, appPre);
+        
+        int portNumber = 1337;
+        Runnable r = () -> {
+            return;
+        };
+        
+        final Apple apdf = new Apple();
+        Runnable rap = () -> System.out.println(app);
+        
+        app = new Apple();
+        
+        
+        
+        // define a function interface chính là định nghĩa
+        // behavior 
+        // sau đó áp dụng behavior cho đối tượng
+        CampaignProcessor cp = c -> {
+            Apple ap = new Apple();
+            // do stuff
+            // do something
+            
+            return ap;
+                 
+        };
+        
+        Apple process = cp.process(new Apple());
     }
-
+    private static Apple create(CampaignProcessor cp) throws Exception {
+       return cp.process(new Apple());
+    }
     private static List<Apple> createApples() {
         return Arrays.asList(
             new Apple("ip11", 211d),
