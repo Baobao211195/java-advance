@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import clean.code.funInf.CampaignProcessor;
+import clean.code.vo.Apple;
 
 public class Demo {
     

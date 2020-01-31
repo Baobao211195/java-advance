@@ -1,6 +1,6 @@
 package clean.code.funInf;
 
-import clean.code.lamda.Apple;
+import clean.code.vo.Apple;
 
 @FunctionalInterface
 public interface CampaignProcessor {
