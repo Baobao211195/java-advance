@@ -24,7 +24,7 @@ public class Demo {
         Apple a3 = fAp.apply("iphon11");
 
         // 3 properties
-        TriFunction<String, String, String, Ipod> ip = Ipod::new;
+        TriFunction<String, String, String, Ipod> ip = Ipod::new; 
 
     }
 
