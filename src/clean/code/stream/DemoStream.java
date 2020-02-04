@@ -43,22 +43,16 @@ public class DemoStream {
         Supplier<List<String>> spLk = LinkedList::new;
         
         List<String> collects = sts.collect(c2s, biConsumer1, biConsumer2); 
-       
-        
+               
         sts.collect(ArrayList::new,
                 ArrayList::add,
                 ArrayList::addAll);
         
         sts.collect(Collectors.toMap(k -> k.charAt(0), v -> v.charAt(1)));
         
-        // create a stream 
-        
+        // create a stream         
         IntStream.range(0,5).map(x -> x*2)
             .forEach(System.out::println);
-        
-    
-        
-        
         
     }
 }

@@ -56,4 +56,20 @@ public class Apple {
         return p -> p.getName().equals("ip11");
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Apple [");
+        if (name != null)
+            builder.append("name=").append(name).append(", ");
+        if (weight != null)
+            builder.append("weight=").append(weight).append(", ");
+        if (ipod != null)
+            builder.append("ipod=").append(ipod);
+        builder.append("]");
+        return builder.toString();
+    }
+    
+    
+
 }
