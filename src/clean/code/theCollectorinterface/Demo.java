@@ -1,11 +1,21 @@
 package clean.code.theCollectorinterface;
 
-import java.util.*;
-import java.util.function.*;
+import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import clean.code.vo.Apple;
-
-import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 public class Demo {
     
@@ -42,7 +52,7 @@ class PrimeCollector implements Collector<Integer, Map<Boolean, List<Integer>>, 
      }
 
     public static boolean isPrime(List<Integer> primes, int candidate) {
-        int candidateRoot = (int) Math.sqrt((double) candidate);
+        int candidateRoot = (int) Math.sqrt(candidate);
         return takeWhile(primes, i -> i <= candidateRoot)
                 .stream()
                 .noneMatch(p -> candidate % p == 0);
