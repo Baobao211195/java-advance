@@ -1,9 +1,12 @@
 package clean.code.completableFuture;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class DemoCompletableFuture {
     /**
@@ -41,6 +44,14 @@ public class DemoCompletableFuture {
         long retrievalTime = (System.nanoTime()- start) / 1000000;
         System.out.println("Price returned after " + retrievalTime + " msecs");
         
+        // create multiple shops
+        List<Shop> shops = Arrays.asList(new Shop("BestPrice"),
+                new Shop("LetsSaveBig"),
+                new Shop("MyFavoriteShop"),
+                new Shop("BuyItAll"));
+        // find prices of shop base on products
+        
+        
         
     }
     
@@ -48,12 +59,64 @@ public class DemoCompletableFuture {
         System.out.println("do some things===================");
         return;
     }
+    
+    public List<String> findPrices(List<Shop> shops , String productName) {
+        return shops.stream()
+                .map(shop -> 
+                    String.format("%s price is %.2f", shop.getName(), shop.getPrice(productName)))
+                .collect(Collectors.toList());
+    }
 
 }
 
-
+class Product {
+    private double price;
+    public double getPrice() {
+        return price;
+    }
+    public void setPrice(double price) {
+        this.price = price;
+    }
+}
 class Shop {
     
+    private Product product;
+    private String name;
+    private double price;
+    public double getPrice(String name) {
+        return price;
+    }
+    public Shop(String name) {
+        this.name = name;
+    }
+    public Shop() {
+    }
+    public String getName() {
+        return name;
+    }
+
+  
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+    
+
+    /**
+     * <PRE>
+     * Use async factory method
+     * </PRE>
+     */
+    public Future<Double> getPriceAsyncApiVsSupplyAsyncFactory(String product) {
+        return CompletableFuture.supplyAsync(() -> calculatePrice(product));
+    }
     
     /**
      * <PRE>
@@ -67,15 +130,20 @@ class Shop {
         //1. create CompletableFuture will contain kết quả của một action
         CompletableFuture<Double> futurePrice = new CompletableFuture<>();
         
-        
         Runnable thread = () -> {
-            //2. Thực hiện việc tính toán ở 1 thread khác.
-            double price = calculatePrice(product);
-            
-            
-            //3. set price được trả về bởi 1 tính toán trong 1 khoảng thời gian dài
-            // của Future khi tính toán này được hoàng thành.
-            futurePrice.complete(price);
+            try {
+                //2. Thực hiện việc tính toán ở 1 thread khác.
+                double price = calculatePrice(product);
+                
+                //3. set price được trả về bởi 1 tính toán trong 1 khoảng thời gian dài
+                // của Future khi tính toán này được hoàng thành.
+                futurePrice.complete(price);
+                
+            } catch (Exception ex) {
+                // process in case has exception of asyn
+                futurePrice.completeExceptionally(ex);
+            }
+         
         };
         
         thread.run();
