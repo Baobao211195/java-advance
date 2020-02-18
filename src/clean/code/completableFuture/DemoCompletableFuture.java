@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 
 public class DemoCompletableFuture {
@@ -55,19 +58,17 @@ public class DemoCompletableFuture {
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
+                new Shop("BuyItAll"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
+                new Shop("BuyItAll"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("BestPrice"),
-                new Shop("LetsSaveBig"),
                 new Shop("MyFavoriteShop"),
                 new Shop("BuyItAll"),
                 new Shop("MyFavoriteShop"),
@@ -77,16 +78,8 @@ public class DemoCompletableFuture {
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
                 new Shop("MyFavoriteShop")
-                );
+        );
         // find prices of shop base on products
         System.out.println("=======================START USE STREAM===========================");
         long starts = System.nanoTime();
@@ -101,6 +94,7 @@ public class DemoCompletableFuture {
         findPriceParalleStream(shops).forEach(System.out::println);
         long retrievalTimesT = (System.nanoTime()- startsT) / 1000000;
         System.out.println("Price returned after " + retrievalTimesT + " msecs");
+        
         System.out.println("========================STOP==========================");
         
         
@@ -110,6 +104,46 @@ public class DemoCompletableFuture {
         long retrievalTimesAs = (System.nanoTime()- startsAs) / 1000000;
         System.out.println("Price returned after " + retrievalTimesAs + " msecs");
         System.out.println("========================STOP==========================");
+        
+        
+        System.out.println("========================NUMBER THREADS OF POOLS========================== "
+                + Runtime.getRuntime().availableProcessors());
+        
+        System.out.println("How to calculate number of thread in a pools (size of thread pool)");
+        /**
+         * Number of core of = Runtime.getRuntime().availableProcessors() (Ncpu)
+         * target CPU utilization (from 0 to 1) (Ucpu)
+         * W/C (waste/computed) time => tỉ lệ lãng phí thời gian trên thời gian tính toán.
+         * 
+         * Nthreads = Ncpu * Ucpu * (1 + W/C)
+         * 
+         * example : ứng dụng dành 99% thời gian để đợi response của shops => W/C= 100
+         * giả sử Ucp = 100%
+         * Runtime.getRuntime().availableProcessors() (Ncpu) =  4
+         * => Nthread = 4 * 100% * (1 + 100) => approximate 400 threads
+         * 
+         */
+        
+        System.out.println("Set up less than 100 threads");
+        
+        final Executor executor  = Executors.newFixedThreadPool(
+                Math.min(shops.size(), 1000), // tạo ra một thread pool vs số lượng threads bằng tối thiểu giữa 100 và số lượng các shops
+                new ThreadFactory () {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread t = new Thread(r);
+                        t.setDaemon(true); // use daemon threads để ngăn cản việc termination of program
+                        return t;
+                    }
+        });
+        
+        System.out.println("=======================START USING COMPLETABLEFUTURE VS EXECUTOR =====");
+        long startsAsPool = System.nanoTime();
+        findPriceAsyncVsExecutor(shops, executor).forEach(System.out::println);
+        long retrievalTimesAsPools = (System.nanoTime()- startsAsPool) / 1000000;
+        System.out.println("Price returned after " + retrievalTimesAsPools + " msecs");
+        System.out.println("========================STOP==========================");
+        
     }
     
     private static void doSomeThingAnothers() {
@@ -136,6 +170,16 @@ public class DemoCompletableFuture {
         List<CompletableFuture<String>> priceAsyncs = 
                 shops.stream()
                     .map(shop -> CompletableFuture.supplyAsync(() -> shop.formatShop()))
+                    .collect(Collectors.toList());
+        // wait for completion all asynchronous calculation prices
+        return priceAsyncs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        
+    }
+    public static List<String> findPriceAsyncVsExecutor (List<Shop> shops, final Executor executor) {
+        // calculate each price vs CompletableFuture
+        List<CompletableFuture<String>> priceAsyncs = 
+                shops.stream()
+                    .map(shop -> CompletableFuture.supplyAsync(() -> shop.formatShop(), executor))
                     .collect(Collectors.toList());
         // wait for completion all asynchronous calculation prices
         return priceAsyncs.stream().map(CompletableFuture::join).collect(Collectors.toList());
