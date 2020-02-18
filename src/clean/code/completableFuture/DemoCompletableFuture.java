@@ -45,14 +45,52 @@ public class DemoCompletableFuture {
         System.out.println("Price returned after " + retrievalTime + " msecs");
         
         // create multiple shops
-        List<Shop> shops = Arrays.asList(new Shop("BestPrice"),
+        List<Shop> shops = Arrays.asList(
+                new Shop("BestPrice"),
                 new Shop("LetsSaveBig"),
                 new Shop("MyFavoriteShop"),
-                new Shop("BuyItAll"));
+                new Shop("BuyItAll"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("BestPrice"),
+                new Shop("LetsSaveBig"),
+                new Shop("MyFavoriteShop"),
+                new Shop("BuyItAll"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop"),
+                new Shop("MyFavoriteShop")
+                );
         // find prices of shop base on products
         System.out.println("=======================START USE STREAM===========================");
         long starts = System.nanoTime();
-        findPrices(shops).forEach(System.out::println);
+        findPricesStream(shops).forEach(System.out::println);
         long retrievalTimes = (System.nanoTime()- starts) / 1000000;
         System.out.println("Price returned after " + retrievalTimes + " msecs");
         System.out.println("========================STOP==========================");
@@ -64,6 +102,14 @@ public class DemoCompletableFuture {
         long retrievalTimesT = (System.nanoTime()- startsT) / 1000000;
         System.out.println("Price returned after " + retrievalTimesT + " msecs");
         System.out.println("========================STOP==========================");
+        
+        
+        System.out.println("=======================START USING COMPLETABLEFUTURE =====");
+        long startsAs = System.nanoTime();
+        findPriceAsync(shops).forEach(System.out::println);
+        long retrievalTimesAs = (System.nanoTime()- startsAs) / 1000000;
+        System.out.println("Price returned after " + retrievalTimesAs + " msecs");
+        System.out.println("========================STOP==========================");
     }
     
     private static void doSomeThingAnothers() {
@@ -71,17 +117,29 @@ public class DemoCompletableFuture {
         return;
     }
     
-    public static List<String> findPrices(List<Shop> shops) {
+    public static List<String> findPricesStream(List<Shop> shops) {
         return shops
                 .stream()
                 .map(Shop::formatShop)
                 .collect(Collectors.toList());
     }
+    
     public static List<String> findPriceParalleStream(List<Shop> shops) {
         return shops
                 .parallelStream()
                 .map(Shop::formatShop)
                 .collect(Collectors.toList());
+    }
+    
+    public static List<String> findPriceAsync (List<Shop> shops) {
+        // calculate each price vs CompletableFuture
+        List<CompletableFuture<String>> priceAsyncs = 
+                shops.stream()
+                    .map(shop -> CompletableFuture.supplyAsync(() -> shop.formatShop()))
+                    .collect(Collectors.toList());
+        // wait for completion all asynchronous calculation prices
+        return priceAsyncs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        
     }
 
 }
