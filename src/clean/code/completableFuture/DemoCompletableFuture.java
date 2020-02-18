@@ -12,6 +12,60 @@ import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 
 public class DemoCompletableFuture {
+    
+    public static void main(String[] args) {
+        // create multiple shops
+        List<Shop> shops = Arrays.asList(
+                new Shop("BestPrice"),
+                new Shop("LetsSaveBig"),
+                new Shop("BuyItAll"),
+                new Shop("MyFavoriteShop")
+        );
+        // learn completableFuture
+        // compareWithoutDiscountService(shops); comment temporary
+        
+        compareWhenUseDiscountService(shops);
+        
+        
+    }
+    private static void compareWhenUseDiscountService(List<Shop> shops) {
+
+        System.out.println("=======================START USING STREAM NORMAL===========================");
+        long starts = System.nanoTime();
+        findPricesNormal(shops).forEach(System.out::println);
+        long retrievalTimes = (System.nanoTime()- starts) / 1000000;
+        System.out.println("Price returned after " + retrievalTimes + " msecs");
+        System.out.println("========================STOP==========================");
+        
+        
+        System.out.println("=======================START USING STREAM Async and sync===========================");
+        long startss = System.nanoTime();
+        findPricesComposingSyncAndAsync(shops, createThreadPool(shops)).forEach(System.out::println);
+        long retrievalTimess = (System.nanoTime()- startss) / 1000000;
+        System.out.println("Price returned after " + retrievalTimess + " msecs");
+        System.out.println("========================STOP==========================");
+    }
+    
+    protected static List<String> findPricesNormal(List<Shop> shops) {
+        return shops.stream()
+            .map(Shop::formatShop)
+            .map(Quote::parse)
+            .map(Discount::applyDiscount)
+            .collect(Collectors.toList());
+    }
+    protected static List<String> findPricesComposingSyncAndAsync(List<Shop> shops, Executor executor) {
+        
+        List<CompletableFuture<String>> prF =
+            shops.stream()
+            .map(shop -> CompletableFuture.supplyAsync(() -> shop.formatShop(), executor))
+            .map(future -> future.thenApply(Quote::parse))
+            .map(future -> future.thenCompose(quote -> CompletableFuture.supplyAsync(() -> Discount.applyDiscount(quote), executor)))
+            .collect(Collectors.toList());
+        
+        return prF.stream()
+                  .map(CompletableFuture::join)
+                  .collect(Collectors.toList());
+    }
     /**
      * học cách sử dụng asynchronous APi
      * học cách tạo ra code non-blocking và làm thế nào thực hiện pipeline 2 tính toán bất đồng bộ 
@@ -19,7 +73,7 @@ public class DemoCompletableFuture {
      * 
      * Học cách xử lý reactive events
      */
-    public static void main(String[] args) {
+    public static void compareWithoutDiscountService(List<Shop> shops) {
         
         Shop shop = new Shop();
         
@@ -47,39 +101,7 @@ public class DemoCompletableFuture {
         long retrievalTime = (System.nanoTime()- start) / 1000000;
         System.out.println("Price returned after " + retrievalTime + " msecs");
         
-        // create multiple shops
-        List<Shop> shops = Arrays.asList(
-                new Shop("BestPrice"),
-                new Shop("LetsSaveBig"),
-                new Shop("MyFavoriteShop"),
-                new Shop("BuyItAll"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("BuyItAll"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("BuyItAll"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("BuyItAll"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop"),
-                new Shop("MyFavoriteShop")
-        );
+        
         // find prices of shop base on products
         System.out.println("=======================START USE STREAM===========================");
         long starts = System.nanoTime();
@@ -125,7 +147,26 @@ public class DemoCompletableFuture {
          */
         
         System.out.println("Set up less than 100 threads");
+        System.out.println("=======================START USING COMPLETABLEFUTURE VS EXECUTOR =====");
+        final Executor executor = createThreadPool(shops);
+        long startsAsPool = System.nanoTime();
+        findPriceAsyncVsExecutor(shops, executor).forEach(System.out::println);
+        long retrievalTimesAsPools = (System.nanoTime()- startsAsPool) / 1000000;
+        System.out.println("Price returned after " + retrievalTimesAsPools + " msecs");
+        System.out.println("========================STOP==========================");
         
+    }
+    /**
+     * <PRE>
+     * Record the detailed description of the method function.
+     * </PRE>
+     * @param paramMap  // BaseConnection object
+     * @param request   // BaseProperties object
+     * @return Executor
+     * @throws Exception
+     */
+    
+    private static Executor createThreadPool(List<Shop> shops) {
         final Executor executor  = Executors.newFixedThreadPool(
                 Math.min(shops.size(), 1000), // tạo ra một thread pool vs số lượng threads bằng tối thiểu giữa 100 và số lượng các shops
                 new ThreadFactory () {
@@ -136,14 +177,7 @@ public class DemoCompletableFuture {
                         return t;
                     }
         });
-        
-        System.out.println("=======================START USING COMPLETABLEFUTURE VS EXECUTOR =====");
-        long startsAsPool = System.nanoTime();
-        findPriceAsyncVsExecutor(shops, executor).forEach(System.out::println);
-        long retrievalTimesAsPools = (System.nanoTime()- startsAsPool) / 1000000;
-        System.out.println("Price returned after " + retrievalTimesAsPools + " msecs");
-        System.out.println("========================STOP==========================");
-        
+        return executor;
     }
     
     private static void doSomeThingAnothers() {
@@ -187,7 +221,29 @@ public class DemoCompletableFuture {
     }
 
 }
+class Quote {
+    private String shopName;
+    private double price;
+    private Discount.Code discountCode;
+    
+    public Quote(String shopName, double price, Discount.Code code) {
+        this.shopName = shopName;
+        this.price = price;
+        this.discountCode = code;
+    }
 
+    public static Quote parse(String s) {
+        String[] split = s.split(":");
+        String shopName = split[0];
+        double price = Double.parseDouble(split[1]);
+        Discount.Code discountCode = Discount.Code.valueOf(split[2]);
+        return new Quote(shopName, price, discountCode);
+    }
+    public String getShopName() { return shopName; }
+    public double getPrice() { return price; }
+    public Discount.Code getDiscountCode() { return discountCode; }
+    
+}
 class Product {
     private double price;
     public double getPrice() {
@@ -197,6 +253,45 @@ class Product {
         this.price = price;
     }
 }
+
+class Discount {
+    
+    public enum Code {
+        
+        NONE(0), SILVER(5), GOLD(10), PLATINUM(15), DIAMOND(20);
+        private final int percentage;
+        private Code(int percentage) {
+            this.percentage = percentage;
+        }
+        public int getPercentage() {
+            return percentage;
+        }
+    }
+    
+    public static String applyDiscount(Quote quote) {
+        return quote.getShopName() 
+                + " price is "
+                + Discount.apply(quote.getPrice(), quote.getDiscountCode());
+        
+    }
+
+    private static String apply(double price, Code discountCode) {
+        delayApplyDiscount();
+        return String.valueOf((price * (100 - discountCode.getPercentage()) / 100));
+    }
+
+    private static void delayApplyDiscount() {
+        try {
+            // delay 1s
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+    
+}
+
 class Shop {
     
     private Product product;
@@ -204,13 +299,15 @@ class Shop {
     private double price;
     
     public String formatShop() {
-        return String.format("%s price is %.2f", this.getName(), this.getPrice(this.getName()));
+        return String.format("%s:%.2f:%s",
+                this.getName(),
+                this.getPrice(this.getName()),
+                Discount.Code.values()[new Random().nextInt(Discount.Code.values().length)]);
     }
-    
     
     public double getPrice(String name) {
         this.price = calculatePrice1(name);
-        return price;
+        return this.price;
     }
     public Shop(String name) {
         this.name = name;
@@ -237,7 +334,6 @@ class Shop {
     public double calculatePrice1(String product) {
         delay();
         Random random = new Random();
-        
         return random.nextDouble() * product.charAt(0) + product.charAt(1); 
     }
     
