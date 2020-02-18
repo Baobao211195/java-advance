@@ -50,9 +50,20 @@ public class DemoCompletableFuture {
                 new Shop("MyFavoriteShop"),
                 new Shop("BuyItAll"));
         // find prices of shop base on products
+        System.out.println("=======================START USE STREAM===========================");
+        long starts = System.nanoTime();
+        findPrices(shops).forEach(System.out::println);
+        long retrievalTimes = (System.nanoTime()- starts) / 1000000;
+        System.out.println("Price returned after " + retrievalTimes + " msecs");
+        System.out.println("========================STOP==========================");
         
         
-        
+        System.out.println("=======================START USING PARALLE STREAM=====");
+        long startsT = System.nanoTime();
+        findPriceParalleStream(shops).forEach(System.out::println);
+        long retrievalTimesT = (System.nanoTime()- startsT) / 1000000;
+        System.out.println("Price returned after " + retrievalTimesT + " msecs");
+        System.out.println("========================STOP==========================");
     }
     
     private static void doSomeThingAnothers() {
@@ -60,10 +71,16 @@ public class DemoCompletableFuture {
         return;
     }
     
-    public List<String> findPrices(List<Shop> shops , String productName) {
-        return shops.stream()
-                .map(shop -> 
-                    String.format("%s price is %.2f", shop.getName(), shop.getPrice(productName)))
+    public static List<String> findPrices(List<Shop> shops) {
+        return shops
+                .stream()
+                .map(Shop::formatShop)
+                .collect(Collectors.toList());
+    }
+    public static List<String> findPriceParalleStream(List<Shop> shops) {
+        return shops
+                .parallelStream()
+                .map(Shop::formatShop)
                 .collect(Collectors.toList());
     }
 
@@ -83,7 +100,14 @@ class Shop {
     private Product product;
     private String name;
     private double price;
+    
+    public String formatShop() {
+        return String.format("%s price is %.2f", this.getName(), this.getPrice(this.getName()));
+    }
+    
+    
     public double getPrice(String name) {
+        this.price = calculatePrice1(name);
         return price;
     }
     public Shop(String name) {
@@ -108,7 +132,13 @@ class Shop {
         this.product = product;
     }
     
-
+    public double calculatePrice1(String product) {
+        delay();
+        Random random = new Random();
+        
+        return random.nextDouble() * product.charAt(0) + product.charAt(1); 
+    }
+    
     /**
      * <PRE>
      * Use async factory method
