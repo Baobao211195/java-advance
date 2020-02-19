@@ -10,8 +10,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
+import clean.code.completableFuture.Shop.Money;
 
 public class DemoCompletableFuture {
+    
+    private static ExchangeService exchangeService = new ExchangeService();
     
     public static void main(String[] args) {
         // create multiple shops
@@ -52,6 +55,17 @@ public class DemoCompletableFuture {
             .map(Quote::parse)
             .map(Discount::applyDiscount)
             .collect(Collectors.toList());
+    }
+    
+    protected static Future<Double> combineTwoIndependentCompletableFuture (Shop shop) {
+        Future<Double> fPriceInUsd = 
+                CompletableFuture.supplyAsync(
+                    () -> shop.calculatePrice(shop.getName()))
+                              .thenCombine(
+                                CompletableFuture.supplyAsync(() -> exchangeService.getRate(Money.EUR, Money.USD)),
+                                (price, rate) -> price * rate
+                               );
+        return fPriceInUsd;
     }
     protected static List<String> findPricesComposingSyncAndAsync(List<Shop> shops, Executor executor) {
         
@@ -413,6 +427,23 @@ class Shop {
             Thread.sleep(1000L);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+    enum Money {
+        USD("USD", 10d), EUR("EUR", 15d);
+        private String name;
+        private Double fixRate;
+
+        private Money(String name, Double fixRate) {
+            this.name = name;
+            this.fixRate = fixRate;
+        }
+
+        public String getName() {
+            return name;
+        }
+        public Double getFixRate() {
+            return fixRate;
         }
     }
 }
