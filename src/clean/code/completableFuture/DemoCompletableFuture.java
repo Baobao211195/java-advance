@@ -423,8 +423,10 @@ class Shop {
     
     private static void delay() {
         try {
+            Random random = new Random();
+            int delay = 500 + random.nextInt(2000);
             // delay 1s
-            Thread.sleep(1000L);
+            Thread.sleep(delay);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
