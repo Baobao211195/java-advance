@@ -1,5 +1,7 @@
 package clean.code.constructor_ref;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import clean.code.funInf.TriFunction;
@@ -24,8 +26,19 @@ public class Demo {
         Apple a3 = fAp.apply("iphon11");
 
         // 3 properties
-        TriFunction<String, String, String, Ipod> ip = Ipod::new; 
+        TriFunction<String, String, String, Ipod> ip = Ipod::new;
+
 
     }
+
+    private static Map<String, String> geg (){
+        return new HashMap<String, String>(){
+            {
+                put("oanh", "1");
+                put("van", "2");
+            }
+        };
+    }
+
 
 }
